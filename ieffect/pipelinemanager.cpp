@@ -60,7 +60,13 @@ static void *startHelper(void *arg)
     return NULL;
 }
 #elif defined(Q_OS_WIN)
-// TODO
+static DWORD WINAPI startHelper( LPVOID lpParam )
+{
+    PipelineStage *stage = (PipelineStage *) lpParam;
+    qDebug() << "starting " << stage;
+    stage->execute();
+    return 0;
+}
 #endif
 
 void PipelineManager::launchParallel(int queueSize)
@@ -121,6 +127,43 @@ void PipelineManager::launchParallel(int queueSize)
      * Démarrer les threads Windows
      * Attention: utilisez seulement l'API Windows (pas l'API de Qt!)
      */
-    qDebug() << "TODO demarrer les threads";
+    HANDLE  hThreadArray[stageList.size()];
+    DWORD   dwThreadIdArray[stageList.size()];
+
+    for( int i=0; i<stageList.size(); i++ ) {
+        hThreadArray[i] = CreateThread(
+                    NULL,                   // default security attributes
+                    0,                      // use default stack size
+                    startHelper,            // thread function name
+                    stageList.at(i),        // argument to thread function
+                    0,                      // use default creation flags
+                    &dwThreadIdArray[i]);   // returns the thread identifier
+
+        // Check the return value for success.
+        // If CreateThread fails, terminate execution.
+        // This will automatically clean up threads and memory.
+
+        if (hThreadArray[i] == NULL)
+        {
+            // ErrorHandler(TEXT("CreateThread"));
+            ExitProcess(3);
+        }
+    } // End of main thread creation loop.
+
+    // Wait until all threads have terminated.
+
+    WaitForMultipleObjects(stageList.size(), hThreadArray, TRUE, INFINITE);
+
+    // Close all thread handles and free memory allocations.
+
+    for(int i=0; i<stageList.size(); i++)
+    {
+        CloseHandle(hThreadArray[i]);
+//        if(pDataArray[i] != NULL)
+//        {
+//            HeapFree(GetProcessHeap(), 0, pDataArray[i]);
+//            pDataArray[i] = NULL;    // Ensure address is not reused.
+//        }
+    }
 #endif
 }

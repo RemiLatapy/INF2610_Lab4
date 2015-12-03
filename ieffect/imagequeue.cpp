@@ -29,9 +29,6 @@ ImageQueue::~ImageQueue()
 
 void ImageQueue::enqueue(QImage *item)
 {
-    // tracer la taille de la file lorsqu'elle change
-    SimpleTracer::writeEvent(this, 0);
-
     int dwWaitResult = WaitForSingleObject(
                 m_semIn,               // handle to semaphore
                 INFINITE);           // INFINITE time-out interval
@@ -40,6 +37,9 @@ void ImageQueue::enqueue(QImage *item)
     {
         // The semaphore object was signaled.
         m_queuedImages.enqueue(item);
+
+        // tracer la taille de la file lorsqu'elle change
+        SimpleTracer::writeEvent(this, 0);
 
         // Release the out semaphore when task is finished
         ReleaseSemaphore(
@@ -52,9 +52,6 @@ void ImageQueue::enqueue(QImage *item)
 
 QImage *ImageQueue::dequeue()
 {
-    // tracer la taille de la file lorsqu'elle change
-    SimpleTracer::writeEvent(this, 0);
-
     int dwWaitResult = WaitForSingleObject(
                 m_semOut,               // handle to semaphore
                 INFINITE);              // INFINITE time-out interval
@@ -68,7 +65,14 @@ QImage *ImageQueue::dequeue()
                     1,            // increase count by one
                     NULL);
 
+        // tracer la taille de la file lorsqu'elle change
+        SimpleTracer::writeEvent(this, 0);
+
        return m_queuedImages.dequeue();
     }
     return NULL;
+}
+
+int ImageQueue::getQsize() {
+    return m_queuedImages.size();
 }

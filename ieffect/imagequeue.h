@@ -16,6 +16,7 @@ public:
     void enqueue(QImage *item);
     QImage *dequeue();
     bool isEmpty();
+    int getQsize();
 private:
     int m_capacity;
     HANDLE m_semIn;

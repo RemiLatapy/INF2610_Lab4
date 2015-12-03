@@ -39,7 +39,7 @@ void ImageQueue::enqueue(QImage *item)
         m_queuedImages.enqueue(item);
 
         // tracer la taille de la file lorsqu'elle change
-        SimpleTracer::writeEvent(this, 0);
+        SimpleTracer::writeEvent(this, m_queuedImages.size());
 
         // Release the out semaphore when task is finished
         ReleaseSemaphore(
@@ -58,6 +58,11 @@ QImage *ImageQueue::dequeue()
 
     if (dwWaitResult == WAIT_OBJECT_0)
     {
+        QImage *ret = m_queuedImages.dequeue();
+
+        // tracer la taille de la file lorsqu'elle change
+        SimpleTracer::writeEvent(this, m_queuedImages.size());
+
         // The semaphore object was signaled.
         // Release the semaphore in when task is finished
         ReleaseSemaphore(
@@ -65,14 +70,7 @@ QImage *ImageQueue::dequeue()
                     1,            // increase count by one
                     NULL);
 
-        // tracer la taille de la file lorsqu'elle change
-        SimpleTracer::writeEvent(this, 0);
-
-       return m_queuedImages.dequeue();
+       return ret;
     }
     return NULL;
-}
-
-int ImageQueue::getQsize() {
-    return m_queuedImages.size();
 }

@@ -15,7 +15,7 @@ void EffectStage::execute()
             m_prod->enqueue(0);
             break;
         }
-        qDebug() << "effx " << m_name << i++ << "queue size : " << m_prod->getQsize();
+        qDebug() << "effx " << m_name << i++;
         setState(PipelineStage::running);
         QImage *out = m_effect->apply(img);
         setState(PipelineStage::waiting);
